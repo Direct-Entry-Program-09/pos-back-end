@@ -86,7 +86,7 @@ public class CustomerServlet extends HttpServlet2 {
             statement.setString(1,memberID);
             int i = statement.executeUpdate();
             if (i==0){
-                response.sendError(HttpServletResponse.SC_NOT_FOUND,"Invalid Member ID");
+                response.sendError(HttpServletResponse.SC_NOT_FOUND,"Invalid Customer ID");
             }else{
                 response.setStatus(HttpServletResponse.SC_NO_CONTENT);
 
