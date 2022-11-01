@@ -15,6 +15,8 @@ import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 @WebServlet(name = "Customer-Servlet",value = "/customers/*",loadOnStartup = 0)
@@ -23,13 +25,26 @@ public class CustomerServlet extends HttpServlet2 {
     private DataSource pool;
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        if (req.getPathInfo()==null || req.getPathInfo().equals("/")){
-            String q = req.getParameter("q");
-            String size = req.getParameter("size");
-            String page = req.getParameter("page");
-            if (q!=null & size!=null & page!=null){}
-        }
-        loadAllCustomers(resp);
+//        if (req.getPathInfo()==null || req.getPathInfo().equals("/")){
+//            String q = req.getParameter("q");
+//            String size = req.getParameter("size");
+//            String page = req.getParameter("page");
+//            if (q!=null & size!=null & page!=null){
+//                if (!size.matches("\\d+") || !page.matches("\\d+")){
+//                    resp.sendError(HttpServletResponse.SC_BAD_REQUEST,"Invalid size and page");
+//                }else {
+//                    searchPaginatedCustomers(resp,q,Integer.parseInt(size),Integer.parseInt(page));
+//                }
+//            }else {
+//                loadAllCustomers(resp);
+//            }
+//        }
+//        Matcher matcher = Pattern.compile("^/([a-zA-Z0-9]{8}(-[a-zA-Z0-9]{4}){3}-[a-zA-Z0-9]{12}/?)$").matcher(req.getPathInfo());
+//        if (matcher.matches()) {
+//            getCustomerDetail(resp, matcher.group(1));
+//        }else {
+//            resp.sendError(HttpServletResponse.SC_NOT_FOUND,"Invalid id");
+//        }
     }
     private void loadAllCustomers(HttpServletResponse response) throws IOException  {
 
@@ -61,14 +76,33 @@ public class CustomerServlet extends HttpServlet2 {
 
     }
 
-    private void getCustomerDetail(HttpServletResponse response, String id) throws IOException {
+    private void getCustomerDetail(HttpServletResponse response, String cid) throws IOException {
+
         try (Connection connection = pool.getConnection()) {
+            System.out.println(cid);
+            PreparedStatement stm = connection.prepareStatement("SELECT * FROM customer WHERE id LIKE ?");
+            stm.setString(1,cid);
+            ResultSet rst = stm.executeQuery();
+            if(rst.next()){
+                String id1 = rst.getString("id");
+                String name = rst.getString("name");
+                String address = rst.getString("address");
+
+                response.setContentType("application/json");
+                JsonbBuilder.create().toJson(new CustomerDTO(id1,name,address),response.getWriter());
+
+            }else {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND,"Invalid customer id");
+            }
+
         } catch (SQLException e) {
             e.printStackTrace();
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,"Internal server error");
         }
 
     }
+
+
 
 
     @Override
