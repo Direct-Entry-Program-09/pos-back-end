@@ -13,11 +13,10 @@ import lk.ijse.dep9.dto.CustomerDTO;
 
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 @WebServlet(name = "Customer-Servlet",value = "/customers/*",loadOnStartup = 0)
@@ -68,7 +67,35 @@ public class CustomerServlet extends HttpServlet2 {
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        resp.getWriter().println("customer doDelete");
+
+        if (req.getPathInfo()==null || req.getPathInfo().equals("/")){
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            return;
+        }
+        Matcher matcher = Pattern.compile("^/([A-Fa-f0-9]{8}-([A-Fa-f0-9]{4}-){3}[A-Fa-f0-9]{12})/?$").matcher(req.getPathInfo());
+        if (matcher.matches()){
+            deleteMember(matcher.group(1),resp);
+        }else {
+            resp.sendError(HttpServletResponse.SC_NOT_IMPLEMENTED,"Invalid UUID");
+        }
+
+    }
+    private void deleteMember(String memberID, HttpServletResponse response){
+        try (Connection connection = pool.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement("DELETE FROM customer WHERE id=?");
+            statement.setString(1,memberID);
+            int i = statement.executeUpdate();
+            if (i==0){
+                response.sendError(HttpServletResponse.SC_NOT_FOUND,"Invalid Member ID");
+            }else{
+                response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     protected void doPatch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.getWriter().println("customer doPatch");
