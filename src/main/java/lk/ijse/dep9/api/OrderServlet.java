@@ -26,14 +26,30 @@ public class OrderServlet extends HttpServlet2 {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         //response.getWriter().println("order doGet");
-        Matcher matcher = Pattern.compile("^/([A-Fa-f\\d]{8}(-[A-Fa-f\\d]{4}){3}-[a-fA-F\\d]{12})$").matcher(request.getPathInfo());
-        if (matcher.matches()) {
-            getOrderDetails(response, matcher.group(1));
-        } else {
-            response.sendError(HttpServletResponse.SC_NOT_IMPLEMENTED);
+        if (request.getPathInfo() == null || request.getPathInfo().equals("/")) {
+            String query = request.getParameter("q");
+            String page = request.getParameter("page");
+            String size = request.getParameter("size");
+            if (query != null && page != null && size != null) {
+                if (!size.matches("\\d+") || !page.matches("\\d+")) {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid page or size");
+                } else {
+
+                    searchAllOrders(query, Integer.parseInt(page), Integer.parseInt(size), response);
+                }
+            } else {
+                Matcher matcher = Pattern.compile("^/([A-Fa-f\\d]{8}(-[A-Fa-f\\d]{4}){3}-[a-fA-F\\d]{12})$").matcher(request.getPathInfo());
+                if (matcher.matches()) {
+                    getOrderDetails(response, matcher.group(1));
+                } else {
+                    response.sendError(HttpServletResponse.SC_NOT_IMPLEMENTED);
+                }
+            }
         }
     }
+private void searchAllOrders(String query, int page,int size, HttpServletResponse response) throws IOException{
 
+}
     private void getOrderDetails(HttpServletResponse response, String orderID) throws ServletException, IOException {
         try (Connection connection = pool.getConnection()) {
             PreparedStatement stm = connection.prepareStatement("SELECT  * FROM `order` WHERE id=?");
