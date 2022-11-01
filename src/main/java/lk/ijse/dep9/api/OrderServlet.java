@@ -15,6 +15,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @WebServlet(name = "OrderServlet", value = "/orders/*", loadOnStartup = 0)
 public class OrderServlet extends HttpServlet2 {
@@ -23,12 +25,18 @@ public class OrderServlet extends HttpServlet2 {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        response.getWriter().println("order doGet");
+        //response.getWriter().println("order doGet");
+        Matcher matcher = Pattern.compile("^/([A-Fa-f\\d]{8}(-[A-Fa-f\\d]{4}){3}-[a-fA-F\\d]{12})$").matcher(request.getPathInfo());
+        if (matcher.matches()) {
+            getOrderDetails(response, matcher.group(1));
+        } else {
+            response.sendError(HttpServletResponse.SC_NOT_IMPLEMENTED);
+        }
     }
 
-    private void getOrderDetails(HttpServletResponse response, String orderID) throws ServletException {
+    private void getOrderDetails(HttpServletResponse response, String orderID) throws ServletException, IOException {
         try (Connection connection = pool.getConnection()) {
-            PreparedStatement stm = connection.prepareStatement("SELECT  * FROM order WHERE id=?");
+            PreparedStatement stm = connection.prepareStatement("SELECT  * FROM `order` WHERE id=?");
             stm.setString(1, orderID);
             ResultSet rst = stm.executeQuery();
             if (rst.next()) {
@@ -39,9 +47,12 @@ public class OrderServlet extends HttpServlet2 {
                 response.setContentType("application/json");
                 JsonbBuilder.create().toJson(oDTO, response.getWriter());
 
+            } else {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Invalid customer Id");
             }
         } catch (SQLException | IOException e) {
             e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to Fetch");
         }
     }
 
