@@ -11,10 +11,7 @@ import lk.ijse.dep9.dto.ItemDTO;
 
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,33 +23,33 @@ public class ItemServlet extends HttpServlet2 {
     private DataSource pool;
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        loadAllItem(response);
-//        if (request.getPathInfo() == null || request.getPathInfo().equals("/")) {
-//            String query = request.getParameter("q");
-//            String size = request.getParameter("size");
-//            String page = request.getParameter("page");
-//            if (query != null && size != null && page != null) {
-//                if (!size.matches("\\d+") || !page.matches("\\d+")) {
-//                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "wrong size");
-//                } else {
-//                    searchPaginatedItems(response, query, Integer.parseInt(size), Integer.parseInt(page));
-//                }
-//            }  else if (size != null & page != null) {
-//                if (!size.matches("\\d+") || !page.matches("\\d+")) {
-//                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "wrong size");
-//                }
-//            } else {
-//                loadAllItem(response);
-//            }
-//
-//        } else {
-//            Matcher matcher = Pattern.compile("^/([a-zA-Z0-9]{8}(-[a-zA-Z0-9]{4}){3}-[a-zA-Z0-9]{12}/?)$").matcher(request.getPathInfo());
-//            if (matcher.matches()) {
-//                getItemDetails(response, matcher.group(1));
-//            } else {
-//                response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, "expected valid id");
-//            }
-//        }
+
+        if (request.getPathInfo() == null || request.getPathInfo().equals("/")) {
+            String query = request.getParameter("q");
+            String size = request.getParameter("size");
+            String page = request.getParameter("page");
+            if (query != null && size != null && page != null) {
+                if (!size.matches("\\d+") || !page.matches("\\d+")) {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "wrong size");
+                } else {
+                    searchPaginatedItems(response, query, Integer.parseInt(size), Integer.parseInt(page));
+                }
+            }  else if (size != null & page != null) {
+                if (!size.matches("\\d+") || !page.matches("\\d+")) {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "wrong size");
+                }
+            } else {
+                loadAllItem(response);
+            }
+
+        } else {
+            Matcher matcher = Pattern.compile("^/([a-zA-Z0-9]{8}(-[a-zA-Z0-9]{4}){3}-[a-zA-Z0-9]{12}/?)$").matcher(request.getPathInfo());
+            if (matcher.matches()) {
+                getItemDetails(response, matcher.group(1));
+            } else {
+                response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, "expected valid id");
+            }
+        }
 
     }
 
@@ -71,7 +68,7 @@ public class ItemServlet extends HttpServlet2 {
     }
     private void loadAllItem(HttpServletResponse response) throws IOException {
         try (Connection connection = pool.getConnection()){
-            System.out.println("loadall");
+
             Statement stm = connection.createStatement();
             ResultSet rst = stm.executeQuery("SELECT * FROM item");
             ArrayList<ItemDTO> items = new ArrayList<>();
@@ -103,7 +100,27 @@ public class ItemServlet extends HttpServlet2 {
 
     }
     private void getItemDetails(HttpServletResponse response,String code){
+        try (Connection connection = pool.getConnection()){
+            PreparedStatement stm = connection.prepareStatement("SELECT * FROM item WHERE code LIKE ?");
+            stm.setString(1, code);
+            ResultSet rst = stm.executeQuery();
+            if (rst.next()){
+                String coden = rst.getString("code");
+                String description = rst.getString("description");
+                double unit_price = rst.getDouble("unit_price");
+                int stock = rst.getInt("stock");
 
+                Jsonb jsonb = JsonbBuilder.create();
+
+                response.setContentType("application/json");
+                jsonb.toJson(new ItemDTO(coden, description, unit_price, stock), response.getWriter());
+            }else {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Invalid Item code");
+            }
+
+        } catch (SQLException | IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
