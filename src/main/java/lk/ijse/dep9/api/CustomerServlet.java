@@ -8,6 +8,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lk.ijse.dep9.api.util.HttpServlet2;
 import lk.ijse.dep9.dto.CustomerDTO;
 
 import javax.sql.DataSource;
@@ -19,8 +20,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 
 
-@WebServlet(name = "Customer-Servlet",value = "/customers",loadOnStartup = 0)
-public class CustomerServlet extends HttpServlet {
+@WebServlet(name = "Customer-Servlet",value = "/customers/*",loadOnStartup = 0)
+public class CustomerServlet extends HttpServlet2 {
     @Resource(lookup = "java:/comp/env/jdbc/pos")//for tom cat if for glassfish jdbc/lms
     private DataSource pool;
     @Override
@@ -58,4 +59,19 @@ public class CustomerServlet extends HttpServlet {
 
 
     }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.getWriter().println("customer dopost");
+
+    }
+
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.getWriter().println("customer doDelete");
+    }
+    protected void doPatch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.getWriter().println("customer doPatch");
+    }
+
 }
