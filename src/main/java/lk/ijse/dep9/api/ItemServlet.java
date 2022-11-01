@@ -26,33 +26,33 @@ public class ItemServlet extends HttpServlet2 {
     private DataSource pool;
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        loadAllItem(response);
-//        if (request.getPathInfo() == null || request.getPathInfo().equals("/")) {
-//            String query = request.getParameter("q");
-//            String size = request.getParameter("size");
-//            String page = request.getParameter("page");
-//            if (query != null && size != null && page != null) {
-//                if (!size.matches("\\d+") || !page.matches("\\d+")) {
-//                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "wrong size");
-//                } else {
-//                    searchPaginatedItems(response, query, Integer.parseInt(size), Integer.parseInt(page));
-//                }
-//            }  else if (size != null & page != null) {
-//                if (!size.matches("\\d+") || !page.matches("\\d+")) {
-//                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "wrong size");
-//                }
-//            } else {
-//                loadAllItem(response);
-//            }
-//
-//        } else {
-//            Matcher matcher = Pattern.compile("^/([a-zA-Z0-9]{8}(-[a-zA-Z0-9]{4}){3}-[a-zA-Z0-9]{12}/?)$").matcher(request.getPathInfo());
-//            if (matcher.matches()) {
-//                getItemDetails(response, matcher.group(1));
-//            } else {
-//                response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, "expected valid id");
-//            }
-//        }
+
+        if (request.getPathInfo() == null || request.getPathInfo().equals("/")) {
+            String query = request.getParameter("q");
+            String size = request.getParameter("size");
+            String page = request.getParameter("page");
+            if (query != null && size != null && page != null) {
+                if (!size.matches("\\d+") || !page.matches("\\d+")) {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "wrong size");
+                } else {
+                    searchPaginatedItems(response, query, Integer.parseInt(size), Integer.parseInt(page));
+                }
+            }  else if (size != null & page != null) {
+                if (!size.matches("\\d+") || !page.matches("\\d+")) {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "wrong size");
+                }
+            } else {
+                loadAllItem(response);
+            }
+
+        } else {
+            Matcher matcher = Pattern.compile("^/([a-zA-Z0-9]{8}(-[a-zA-Z0-9]{4}){3}-[a-zA-Z0-9]{12}/?)$").matcher(request.getPathInfo());
+            if (matcher.matches()) {
+                getItemDetails(response, matcher.group(1));
+            } else {
+                response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, "expected valid id");
+            }
+        }
 
     }
 
@@ -71,7 +71,6 @@ public class ItemServlet extends HttpServlet2 {
     }
     private void loadAllItem(HttpServletResponse response) throws IOException {
         try (Connection connection = pool.getConnection()){
-            System.out.println("loadall");
             Statement stm = connection.createStatement();
             ResultSet rst = stm.executeQuery("SELECT * FROM item");
             ArrayList<ItemDTO> items = new ArrayList<>();
