@@ -13,10 +13,7 @@ import lk.ijse.dep9.dto.CustomerDTO;
 
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 
 
@@ -26,8 +23,15 @@ public class CustomerServlet extends HttpServlet2 {
     private DataSource pool;
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if (req.getPathInfo()==null || req.getPathInfo().equals("/")){
+            String q = req.getParameter("q");
+            String size = req.getParameter("size");
+            String page = req.getParameter("page");
 
-        loadAllCustomers(resp);
+            searchPaginatedCustomers(req,resp,q,Integer.parseInt(size),Integer.parseInt(page));
+        }
+
+//        loadAllCustomers(resp);
 
     }
     private void loadAllCustomers(HttpServletResponse response) throws IOException  {
@@ -58,6 +62,46 @@ public class CustomerServlet extends HttpServlet2 {
         }
 
 
+    }
+    private void searchPaginatedCustomers(HttpServletRequest request,HttpServletResponse response,String query, int size,int page) throws IOException {
+        try (Connection connection = pool.getConnection()) {
+            String sql="SELECT COUNT(id) AS count FROM customer WHERE id LIKE ? OR name LIKE ? OR address LIKE ?";
+            PreparedStatement stm= connection.prepareStatement(sql);
+            query="%"+query+"%";
+            stm.setString(1,query);
+            stm.setString(2,query);
+            stm.setString(3,query);
+            ResultSet resultSet = stm.executeQuery();
+            resultSet.next();
+            int count = resultSet.getInt("count");
+            response.setIntHeader("X-Total-Count",count);
+            PreparedStatement statement2 = connection.prepareStatement("SELECT * FROM customer WHERE id LIKE ? OR name LIKE ? OR address LIKE ? LIMIT ? OFFSET ?");
+            statement2.setString(1,query);
+            statement2.setString(2,query);
+            statement2.setString(3,query);
+            statement2.setInt(4,size);
+            statement2.setInt(5,(page-1)*size);
+            ResultSet resultSet1 = statement2.executeQuery();
+
+
+            ArrayList<CustomerDTO> customers = new ArrayList<>();
+
+            while (resultSet1.next()){
+                String id = resultSet1.getString("id");
+                String name = resultSet1.getString("name");
+                String address = resultSet1.getString("address");
+                customers.add(new CustomerDTO(id,name,address));
+            }
+            Jsonb jsonb = JsonbBuilder.create();
+            response.setContentType("application/json");
+            jsonb.toJson(customers,response.getWriter());
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST,"Invalid query, size or page has been passed");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
