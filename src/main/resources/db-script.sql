@@ -9,3 +9,10 @@ INSERT INTO customer (id, name, address) VALUES (UUID(),'nimal','panadura'),
                                                 (UUID(),'sunil','colombo'),
                                                 (UUID(),'ruwan','matara'),
                                                 (UUID(),'nuwan','kalutara');
+
+CREATE TABLE item(
+                         code VARCHAR(36) PRIMARY KEY ,
+                         description VARCHAR(150) NOT NULL ,
+                         unit_price DECIMAL(50) NOT NULL,
+                         stock INT(50) NOT NULL
+);
