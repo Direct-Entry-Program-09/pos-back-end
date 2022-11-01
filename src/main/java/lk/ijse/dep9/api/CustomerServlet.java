@@ -13,10 +13,7 @@ import lk.ijse.dep9.dto.CustomerDTO;
 
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 
 
@@ -26,9 +23,13 @@ public class CustomerServlet extends HttpServlet2 {
     private DataSource pool;
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-
+        if (req.getPathInfo()==null || req.getPathInfo().equals("/")){
+            String q = req.getParameter("q");
+            String size = req.getParameter("size");
+            String page = req.getParameter("page");
+            if (q!=null & size!=null & page!=null){}
+        }
         loadAllCustomers(resp);
-
     }
     private void loadAllCustomers(HttpServletResponse response) throws IOException  {
 
@@ -60,8 +61,19 @@ public class CustomerServlet extends HttpServlet2 {
 
     }
 
+    private void getCustomerDetail(HttpServletResponse response, String id) throws IOException {
+        try (Connection connection = pool.getConnection()) {
+        } catch (SQLException e) {
+            e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,"Internal server error");
+        }
+
+    }
+
+
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
         resp.getWriter().println("customer dopost");
 
     }
