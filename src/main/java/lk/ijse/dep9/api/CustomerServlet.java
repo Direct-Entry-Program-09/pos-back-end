@@ -52,9 +52,13 @@ public class CustomerServlet extends HttpServlet2 {
             response.setContentType("application/json");
             jsonb.toJson(dto,response.getWriter());
         } catch (SQLException e) {
+
+            e.printStackTrace();
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+
         }
 
 
