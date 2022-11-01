@@ -74,16 +74,16 @@ public class CustomerServlet extends HttpServlet2 {
         }
         Matcher matcher = Pattern.compile("^/([A-Fa-f0-9]{8}-([A-Fa-f0-9]{4}-){3}[A-Fa-f0-9]{12})/?$").matcher(req.getPathInfo());
         if (matcher.matches()){
-            deleteMember(matcher.group(1),resp);
+            deleteCustomer(matcher.group(1),resp);
         }else {
             resp.sendError(HttpServletResponse.SC_NOT_IMPLEMENTED,"Invalid UUID");
         }
 
     }
-    private void deleteMember(String memberID, HttpServletResponse response){
+    private void deleteCustomer(String customerID, HttpServletResponse response){
         try (Connection connection = pool.getConnection()) {
             PreparedStatement statement = connection.prepareStatement("DELETE FROM customer WHERE id=?");
-            statement.setString(1,memberID);
+            statement.setString(1,customerID);
             int i = statement.executeUpdate();
             if (i==0){
                 response.sendError(HttpServletResponse.SC_NOT_FOUND,"Invalid Customer ID");
