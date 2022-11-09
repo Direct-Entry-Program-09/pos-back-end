@@ -15,6 +15,7 @@ import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -107,8 +108,22 @@ public class CustomerServlet extends HttpServlet2 {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-
-        resp.getWriter().println("customer dopost");
+        CustomerDTO customerDTO = JsonbBuilder.create().fromJson(req.getReader(), CustomerDTO.class);
+        try (Connection connection = pool.getConnection()) {
+            customerDTO.setId(UUID.randomUUID().toString());
+            PreparedStatement stm = connection.prepareStatement("INSERT INTO customer (id, name, address) VALUES (?,?,?)");
+            stm.setString(1,customerDTO.getId());
+            stm.setString(2,customerDTO.getName());
+            stm.setString(3,customerDTO.getAddress());
+            int i = stm.executeUpdate();
+            if (i==1){
+                resp.setStatus(HttpServletResponse.SC_CREATED);
+            }else {
+                resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
 
     }
 
